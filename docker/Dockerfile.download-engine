@@ -1,0 +1,21 @@
+FROM golang:1.21-alpine AS builder
+
+WORKDIR /app
+
+COPY backend/download-engine/go.mod backend/download-engine/go.sum ./
+RUN go mod download
+
+COPY backend/download-engine/ .
+RUN CGO_ENABLED=0 GOOS=linux go build -o download-engine main.go
+
+FROM alpine:latest
+
+WORKDIR /app
+
+COPY --from=builder /app/download-engine .
+
+RUN mkdir -p /app/downloads
+
+EXPOSE 8080
+
+CMD ["./download-engine"]
